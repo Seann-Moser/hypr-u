@@ -1,18 +1,3 @@
-Here’s an improved **README.md** tailored for your real repository:
-
-📦 **[https://github.com/Seann-Moser/hypr-u](https://github.com/Seann-Moser/hypr-u)**
-
-I incorporated:
-
-* Your repo name
-* Your current config example
-* Instructions for adding `hypr-u` to `exec-once` in Hyprland
-* Clean layout suitable for GitHub
-* Optional badges/header section
-
-Feel free to copy/paste this directly into your GitHub repo.
-
----
 
 # **Hypr-U — A File-Triggered Command Runner for Hyprland**
 
