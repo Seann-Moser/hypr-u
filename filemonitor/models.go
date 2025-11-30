@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -66,17 +68,22 @@ func NewFileWatcher(cfg *Config) (*FileWatcher, error) {
 
 	// Load file entries from config
 	for _, f := range cfg.Files {
-		p, _ := expandHome(f.Path)
-		st, err := os.Stat(p)
+		paths, err := expandPaths(f.Path)
 		if err != nil {
 			continue
 		}
-		fw.Files[p] = &fileState{
-			FullPath: p,
-			ModTime:  st.ModTime(),
-			Size:     st.Size(),
+		for _, p := range paths {
+			st, err := os.Stat(p)
+			if err != nil {
+				continue
+			}
+			fw.Files[p] = &fileState{
+				FullPath: p,
+				ModTime:  st.ModTime(),
+				Size:     st.Size(),
+			}
+			fw.FileCfgs[p] = f
 		}
-		fw.FileCfgs[p] = f
 	}
 
 	return fw, nil
@@ -189,24 +196,24 @@ func (fw *FileWatcher) StartWorker() {
 			}
 
 			for _, c := range cfg.Cmd {
-
 				cmd := exec.Command(c.Path, c.Args...)
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-
 				if c.Background {
+					cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 					cmd.Stdout = io.Discard
 					cmd.Stderr = io.Discard
-					// Non-blocking: run command in background
+					cmd.Stdin = nil
+
 					if err := cmd.Start(); err != nil {
-						log.Printf("Failed to start background command %s: %v", c.Path, err)
+						log.Printf("Failed to start detached background command %s: %v", c.Path, err)
 					} else {
-						log.Printf("Started background command %s", c.Path)
+						log.Printf("Started detached background command %s", c.Path)
 					}
 					continue
 				}
 
-				// Blocking execution (foreground)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+
 				if err := cmd.Run(); err != nil {
 					log.Printf("Command execution failed: %v", err)
 				} else {
@@ -216,6 +223,45 @@ func (fw *FileWatcher) StartWorker() {
 
 		}
 	}()
+}
+
+func expandPaths(path string) ([]string, error) {
+	path, _ = expandHome(path) // handle ~
+
+	// Recursive **
+	if strings.HasSuffix(path, "/**") {
+		base := strings.TrimSuffix(path, "/**")
+		var matches []string
+		err := filepath.Walk(base, func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return nil
+			}
+			if !info.IsDir() {
+				matches = append(matches, p)
+			}
+			return nil
+		})
+		return matches, err
+	}
+
+	// Non-recursive *
+	if strings.HasSuffix(path, "/*") {
+		base := strings.TrimSuffix(path, "/*")
+		entries, err := os.ReadDir(base)
+		if err != nil {
+			return nil, err
+		}
+		var matches []string
+		for _, e := range entries {
+			if !e.IsDir() {
+				matches = append(matches, filepath.Join(base, e.Name()))
+			}
+		}
+		return matches, nil
+	}
+
+	// Single file
+	return []string{path}, nil
 }
 
 func (fw *FileWatcher) ReloadConfig() error {
@@ -229,18 +275,22 @@ func (fw *FileWatcher) ReloadConfig() error {
 	fw.FileCfgs = make(map[string]FileConfig)
 
 	for _, f := range cfg.Files {
-		p, _ := expandHome(f.Path)
-		st, err := os.Stat(p)
+		paths, err := expandPaths(f.Path)
 		if err != nil {
 			continue
 		}
-
-		fw.Files[p] = &fileState{
-			FullPath: p,
-			ModTime:  st.ModTime(),
-			Size:     st.Size(),
+		for _, p := range paths {
+			st, err := os.Stat(p)
+			if err != nil {
+				continue
+			}
+			fw.Files[p] = &fileState{
+				FullPath: p,
+				ModTime:  st.ModTime(),
+				Size:     st.Size(),
+			}
+			fw.FileCfgs[p] = f
 		}
-		fw.FileCfgs[p] = f
 	}
 
 	fw.Interval = cfg.Interval

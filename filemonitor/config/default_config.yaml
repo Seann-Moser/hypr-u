@@ -11,7 +11,7 @@ files:
 
       - path: /usr/bin/hypridle
         background: true
-  - path: ~/.config/waybar/config.jsonc
+  - path: ~/.config/waybar/**
     commands:
       - path: killall
         args: ["waybar"]
