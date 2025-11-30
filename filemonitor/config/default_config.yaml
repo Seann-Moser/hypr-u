@@ -1,0 +1,21 @@
+# Default polling interval
+interval: 2s
+
+# Default files
+files:
+  - path: ~/.config/hypr/hypridle.conf
+    commands:
+      - path: killall
+        args: ["hypridle"]
+        background: false
+
+      - path: /usr/bin/hypridle
+        background: true
+  - path: ~/.config/waybar/config.jsonc
+    commands:
+      - path: killall
+        args: ["waybar"]
+        background: false
+
+      - path: /usr/bin/waybar
+        background: true
