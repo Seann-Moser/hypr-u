@@ -1,2 +1,60 @@
 vendor
 .idea
+
+# Go build artifacts
+*.exe
+*.out
+bin/
+
+# Go module vendor and checksum files
+vendor/
+
+# AUR packaging files
+*.tar.zst
+*.pkg.tar.zst
+
+# Ignore Git metadata
+hypr-u-aur/hypr-u/.git/
+
+# Ignore built packages
+hypr-u-aur/*.pkg.tar.zst
+hypr-u-aur/*.pkg.tar.xz
+
+# Ignore unnecessary Git files
+hypr-u-aur/hypr-u/HEAD
+hypr-u-aur/hypr-u/config
+hypr-u-aur/hypr-u/description
+hypr-u-aur/hypr-u/hooks/
+hypr-u-aur/hypr-u/info/
+hypr-u-aur/hypr-u/objects/
+hypr-u-aur/hypr-u/packed-refs
+
+# Ignore package build artifacts
+hypr-u-aur/pkg/*/.BUILDINFO
+hypr-u-aur/pkg/*/.MTREE
+hypr-u-aur/pkg/*/.PKGINFO
+hypr-u-aur/pkg/*/usr/lib/debug/.build-id/
+hypr-u-aur/pkg/*/usr/src/debug/
+
+# macOS junk
+.DS_Store
+
+# Vim swap files
+*.swp
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# Log files
+*.log
+
+# Other compiled files
+*.o
+*.a
+*.so
+
+# Temporary build directories
+.build/
+.settings/
+
